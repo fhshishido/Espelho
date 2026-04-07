@@ -1,0 +1,700 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScreenCast</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+:root {
+–bg: #0a0a0f;
+–surface: #12121a;
+–border: #1e1e2e;
+–accent: #00f5a0;
+–accent2: #00d9f5;
+–text: #e8e8f0;
+–muted: #5a5a7a;
+–danger: #ff4466;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: 'Syne', sans-serif;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 20px;
+overflow-x: hidden;
+}
+
+body::before {
+content: '';
+position: fixed;
+inset: 0;
+background:
+radial-gradient(ellipse at 20% 20%, rgba(0,245,160,0.06) 0%, transparent 60%),
+radial-gradient(ellipse at 80% 80%, rgba(0,217,245,0.06) 0%, transparent 60%);
+pointer-events: none;
+z-index: 0;
+}
+
+.container {
+position: relative;
+z-index: 1;
+width: 100%;
+max-width: 600px;
+}
+
+header {
+text-align: center;
+margin-bottom: 40px;
+}
+
+.logo {
+font-family: 'Space Mono', monospace;
+font-size: 11px;
+letter-spacing: 4px;
+color: var(–accent);
+text-transform: uppercase;
+margin-bottom: 8px;
+opacity: 0.8;
+}
+
+h1 {
+font-size: clamp(36px, 8vw, 56px);
+font-weight: 800;
+line-height: 1;
+background: linear-gradient(135deg, var(–accent), var(–accent2));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+.subtitle {
+font-family: 'Space Mono', monospace;
+font-size: 11px;
+color: var(–muted);
+margin-top: 10px;
+letter-spacing: 1px;
+}
+
+/* MODE SELECTOR */
+.mode-selector {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+margin-bottom: 32px;
+}
+
+.mode-btn {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px 16px;
+cursor: pointer;
+transition: all 0.2s;
+text-align: center;
+color: var(–text);
+font-family: 'Syne', sans-serif;
+font-size: 14px;
+font-weight: 700;
+}
+
+.mode-btn:hover {
+border-color: var(–accent);
+background: rgba(0,245,160,0.05);
+}
+
+.mode-btn.active {
+border-color: var(–accent);
+background: rgba(0,245,160,0.08);
+color: var(–accent);
+}
+
+.mode-btn .icon {
+font-size: 28px;
+display: block;
+margin-bottom: 8px;
+}
+
+/* PANEL */
+.panel {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 28px;
+display: none;
+}
+
+.panel.visible { display: block; }
+
+.panel-title {
+font-family: 'Space Mono', monospace;
+font-size: 10px;
+letter-spacing: 3px;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 20px;
+}
+
+/* STATUS */
+.status {
+display: flex;
+align-items: center;
+gap: 10px;
+font-family: 'Space Mono', monospace;
+font-size: 12px;
+color: var(–muted);
+margin-bottom: 20px;
+padding: 10px 14px;
+background: var(–bg);
+border-radius: 8px;
+border: 1px solid var(–border);
+}
+
+.dot {
+width: 8px;
+height: 8px;
+border-radius: 50%;
+background: var(–muted);
+flex-shrink: 0;
+}
+
+.dot.green { background: var(–accent); box-shadow: 0 0 8px var(–accent); animation: pulse 2s infinite; }
+.dot.yellow { background: #f5c400; box-shadow: 0 0 8px #f5c400; }
+.dot.red { background: var(–danger); }
+
+@keyframes pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.4; }
+}
+
+/* ID DISPLAY */
+.id-box {
+background: var(–bg);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 14px 16px;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+}
+
+.id-label {
+font-family: 'Space Mono', monospace;
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 2px;
+text-transform: uppercase;
+white-space: nowrap;
+}
+
+.id-value {
+font-family: 'Space Mono', monospace;
+font-size: 14px;
+color: var(–accent);
+font-weight: 700;
+letter-spacing: 2px;
+flex: 1;
+text-align: center;
+}
+
+.copy-btn {
+background: rgba(0,245,160,0.1);
+border: 1px solid rgba(0,245,160,0.3);
+color: var(–accent);
+border-radius: 6px;
+padding: 6px 12px;
+font-family: 'Space Mono', monospace;
+font-size: 10px;
+cursor: pointer;
+white-space: nowrap;
+transition: all 0.2s;
+}
+
+.copy-btn:hover { background: rgba(0,245,160,0.2); }
+
+/* INPUT */
+.input-group {
+display: flex;
+gap: 10px;
+margin-bottom: 16px;
+}
+
+input[type="text"] {
+flex: 1;
+background: var(–bg);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 12px 16px;
+color: var(–text);
+font-family: 'Space Mono', monospace;
+font-size: 14px;
+letter-spacing: 2px;
+outline: none;
+transition: border-color 0.2s;
+}
+
+input[type="text"]:focus { border-color: var(–accent2); }
+input[type="text"]::placeholder { color: var(–muted); letter-spacing: 1px; }
+
+/* BUTTONS */
+.btn {
+padding: 13px 24px;
+border-radius: 10px;
+border: none;
+font-family: 'Syne', sans-serif;
+font-size: 14px;
+font-weight: 700;
+cursor: pointer;
+transition: all 0.2s;
+white-space: nowrap;
+}
+
+.btn-primary {
+background: linear-gradient(135deg, var(–accent), var(–accent2));
+color: #0a0a0f;
+width: 100%;
+}
+
+.btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+.btn-danger {
+background: rgba(255,68,102,0.1);
+border: 1px solid rgba(255,68,102,0.3);
+color: var(–danger);
+width: 100%;
+margin-top: 10px;
+}
+
+.btn-danger:hover { background: rgba(255,68,102,0.2); }
+
+/* VIDEO */
+.video-wrap {
+position: relative;
+background: #000;
+border-radius: 12px;
+overflow: hidden;
+margin-top: 20px;
+border: 1px solid var(–border);
+display: none;
+aspect-ratio: 16/9;
+}
+
+.video-wrap.visible { display: block; }
+
+video {
+width: 100%;
+height: 100%;
+object-fit: contain;
+display: block;
+}
+
+.video-badge {
+position: absolute;
+top: 10px;
+left: 10px;
+background: rgba(0,0,0,0.7);
+backdrop-filter: blur(8px);
+border-radius: 6px;
+padding: 4px 10px;
+font-family: 'Space Mono', monospace;
+font-size: 10px;
+letter-spacing: 2px;
+color: var(–accent);
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.live-dot {
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: var(–danger);
+animation: pulse 1s infinite;
+}
+
+/* DIVIDER */
+.divider {
+display: flex;
+align-items: center;
+gap: 12px;
+margin: 20px 0;
+color: var(–muted);
+font-family: 'Space Mono', monospace;
+font-size: 10px;
+letter-spacing: 2px;
+}
+
+.divider::before, .divider::after {
+content: '';
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+
+/* INFO BOX */
+.info {
+background: rgba(0,217,245,0.05);
+border: 1px solid rgba(0,217,245,0.15);
+border-radius: 10px;
+padding: 12px 14px;
+font-family: 'Space Mono', monospace;
+font-size: 11px;
+color: var(–accent2);
+line-height: 1.6;
+margin-top: 16px;
+}
+
+/* FULLSCREEN BTN */
+.fullscreen-btn {
+position: absolute;
+bottom: 10px;
+right: 10px;
+background: rgba(0,0,0,0.7);
+backdrop-filter: blur(8px);
+border: 1px solid rgba(255,255,255,0.1);
+color: white;
+border-radius: 6px;
+padding: 6px 10px;
+font-size: 16px;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.fullscreen-btn:hover { background: rgba(255,255,255,0.1); }
+
+/* SPINNER */
+.spinner {
+display: inline-block;
+width: 12px;
+height: 12px;
+border: 2px solid rgba(0,245,160,0.2);
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+vertical-align: middle;
+margin-right: 6px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">● screencast</div>
+    <h1>ScreenCast</h1>
+    <p class="subtitle">// transmita sua tela em tempo real</p>
+  </header>
+
+  <!-- MODE SELECTOR -->
+
+  <div class="mode-selector" id="modeSelector">
+    <button class="mode-btn" onclick="setMode('transmit')">
+      <span class="icon">📡</span>
+      Transmitir
+    </button>
+    <button class="mode-btn" onclick="setMode('receive')">
+      <span class="icon">📺</span>
+      Assistir
+    </button>
+  </div>
+
+  <!-- TRANSMIT PANEL -->
+
+  <div class="panel" id="transmitPanel">
+    <div class="panel-title">// modo transmissor</div>
+
+```
+<div class="status" id="txStatus">
+  <div class="dot" id="txDot"></div>
+  <span id="txStatusText">Aguardando inicialização...</span>
+</div>
+
+<div class="id-box" id="idBox" style="display:none">
+  <span class="id-label">Código</span>
+  <span class="id-value" id="myPeerId">--</span>
+  <button class="copy-btn" onclick="copyId()">COPIAR</button>
+</div>
+
+<button class="btn btn-primary" id="startBtn" onclick="startTransmission()">
+  Iniciar Transmissão
+</button>
+
+<button class="btn btn-danger" id="stopBtn" onclick="stopTransmission()" style="display:none">
+  ⏹ Parar Transmissão
+</button>
+
+<div class="video-wrap" id="localVideoWrap">
+  <video id="localVideo" autoplay muted playsinline></video>
+  <div class="video-badge"><div class="live-dot"></div>PREVIEW</div>
+</div>
+
+<div class="info" id="txInfo" style="display:none">
+  ℹ️ Compartilhe o código acima com quem quiser assistir.<br>
+  Eles devem abrir este mesmo arquivo e escolher "Assistir".
+</div>
+```
+
+  </div>
+
+  <!-- RECEIVE PANEL -->
+
+  <div class="panel" id="receivePanel">
+    <div class="panel-title">// modo receptor</div>
+
+```
+<div class="status" id="rxStatus">
+  <div class="dot" id="rxDot"></div>
+  <span id="rxStatusText">Digite o código do transmissor</span>
+</div>
+
+<div class="input-group">
+  <input type="text" id="peerIdInput" placeholder="CÓDIGO DO TRANSMISSOR" maxlength="20"
+    oninput="this.value = this.value.toUpperCase()"
+    onkeydown="if(event.key==='Enter') connectToHost()" />
+  <button class="btn btn-primary" style="width:auto" onclick="connectToHost()">Conectar</button>
+</div>
+
+<div class="video-wrap" id="remoteVideoWrap">
+  <video id="remoteVideo" autoplay playsinline controls></video>
+  <div class="video-badge"><div class="live-dot"></div>AO VIVO</div>
+  <button class="fullscreen-btn" onclick="goFullscreen()" title="Tela cheia">⛶</button>
+</div>
+
+<div class="info" style="margin-top:16px">
+  ℹ️ Funciona em qualquer browser moderno -- Chrome, Firefox, Edge, Safari.<br>
+  No celular ou TV, basta abrir este arquivo e colar o código.
+</div>
+```
+
+  </div>
+</div>
+
+<script>
+  let peer, localStream, currentCall;
+  let mode = null;
+
+  // ── DETECT MODE FROM URL ──────────────────────────────────────────
+  window.addEventListener('load', () => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      setMode('receive');
+      document.getElementById('peerIdInput').value = code.toUpperCase();
+      connectToHost();
+    }
+  });
+
+  // ── MODE ─────────────────────────────────────────────────────────
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-btn').forEach((b,i) => {
+      b.classList.toggle('active', (i===0 && m==='transmit') || (i===1 && m==='receive'));
+    });
+    document.getElementById('transmitPanel').classList.toggle('visible', m === 'transmit');
+    document.getElementById('receivePanel').classList.toggle('visible', m === 'receive');
+
+    if (m === 'transmit') initPeer();
+  }
+
+  // ── PEER INIT ─────────────────────────────────────────────────────
+  function initPeer() {
+    setTxStatus('yellow', '<span class="spinner"></span>Conectando ao servidor...');
+
+    // Generate short readable ID
+    const id = Math.random().toString(36).substr(2,6).toUpperCase();
+
+    peer = new Peer(id, {
+      host: '0.peerjs.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
+
+    peer.on('open', (id) => {
+      document.getElementById('myPeerId').textContent = id;
+      document.getElementById('idBox').style.display = 'flex';
+      setTxStatus('green', 'Pronto -- aguardando receptor conectar');
+      document.getElementById('startBtn').disabled = false;
+    });
+
+    peer.on('error', (err) => {
+      console.error(err);
+      setTxStatus('red', 'Erro: ' + err.type);
+    });
+
+    peer.on('call', (call) => {
+      // Receptor ligou de volta (não esperado nesse fluxo)
+    });
+  }
+
+  // ── TRANSMIT ──────────────────────────────────────────────────────
+  async function startTransmission() {
+    try {
+      setTxStatus('yellow', '<span class="spinner"></span>Solicitando acesso à tela...');
+
+      localStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30, cursor: 'always' },
+        audio: true
+      });
+
+      // Show local preview
+      document.getElementById('localVideo').srcObject = localStream;
+      document.getElementById('localVideoWrap').classList.add('visible');
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('stopBtn').style.display = 'block';
+      document.getElementById('txInfo').style.display = 'block';
+
+      setTxStatus('green', '● Transmitindo -- aguardando receptores');
+
+      // Handle incoming calls (receivers calling us)
+      peer.on('call', (call) => {
+        call.answer(localStream);
+        setTxStatus('green', '● Transmitindo -- receptor conectado!');
+
+        call.on('close', () => {
+          setTxStatus('green', '● Transmitindo -- receptor desconectou');
+        });
+      });
+
+      // Handle stream end (user stops sharing)
+      localStream.getVideoTracks()[0].addEventListener('ended', () => {
+        stopTransmission();
+      });
+
+    } catch (err) {
+      console.error(err);
+      if (err.name === 'NotAllowedError') {
+        setTxStatus('red', 'Permissão negada para capturar a tela');
+      } else {
+        setTxStatus('red', 'Erro ao capturar tela: ' + err.message);
+      }
+    }
+  }
+
+  function stopTransmission() {
+    if (localStream) {
+      localStream.getTracks().forEach(t => t.stop());
+      localStream = null;
+    }
+    document.getElementById('localVideoWrap').classList.remove('visible');
+    document.getElementById('startBtn').style.display = 'block';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('txInfo').style.display = 'none';
+    setTxStatus('green', 'Transmissão encerrada -- pronto para nova sessão');
+  }
+
+  // ── RECEIVE ───────────────────────────────────────────────────────
+  function connectToHost() {
+    const hostId = document.getElementById('peerIdInput').value.trim().toUpperCase();
+    if (!hostId) return;
+
+    setRxStatus('yellow', '<span class="spinner"></span>Conectando ao transmissor...');
+
+    if (peer) peer.destroy();
+
+    peer = new Peer({
+      host: '0.peerjs.com',
+      port: 443,
+      secure: true,
+      path: '/',
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
+
+    peer.on('open', () => {
+      const call = peer.call(hostId, createDummyStream());
+      currentCall = call;
+
+      call.on('stream', (remoteStream) => {
+        const video = document.getElementById('remoteVideo');
+        video.srcObject = remoteStream;
+        document.getElementById('remoteVideoWrap').classList.add('visible');
+        setRxStatus('green', '● Conectado -- recebendo transmissão ao vivo');
+      });
+
+      call.on('close', () => {
+        setRxStatus('red', 'Transmissor encerrou a sessão');
+        document.getElementById('remoteVideoWrap').classList.remove('visible');
+      });
+
+      call.on('error', (err) => {
+        setRxStatus('red', 'Erro na conexão: ' + err);
+      });
+    });
+
+    peer.on('error', (err) => {
+      if (err.type === 'peer-unavailable') {
+        setRxStatus('red', 'Código inválido ou transmissor offline');
+      } else {
+        setRxStatus('red', 'Erro: ' + err.type);
+      }
+    });
+  }
+
+  // Dummy stream needed to initiate call from receiver side
+  function createDummyStream() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1; canvas.height = 1;
+    return canvas.captureStream();
+  }
+
+  // ── FULLSCREEN ────────────────────────────────────────────────────
+  function goFullscreen() {
+    const wrap = document.getElementById('remoteVideoWrap');
+    if (wrap.requestFullscreen) wrap.requestFullscreen();
+    else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
+  }
+
+  // ── COPY ID ───────────────────────────────────────────────────────
+  function copyId() {
+    const id = document.getElementById('myPeerId').textContent;
+    // Also build a direct link
+    const url = `${location.href.split('?')[0]}?code=${id}`;
+    navigator.clipboard.writeText(id).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✓ COPIADO';
+      setTimeout(() => btn.textContent = 'COPIAR', 2000);
+    });
+  }
+
+  // ── STATUS HELPERS ────────────────────────────────────────────────
+  function setTxStatus(color, text) {
+    document.getElementById('txDot').className = 'dot ' + color;
+    document.getElementById('txStatusText').innerHTML = text;
+  }
+
+  function setRxStatus(color, text) {
+    document.getElementById('rxDot').className = 'dot ' + color;
+    document.getElementById('rxStatusText').innerHTML = text;
+  }
+</script>
+
+</body>
+</html>
