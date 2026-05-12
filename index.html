@@ -1,4 +1,4 @@
-<!-- index.html | v.30 | 2026-04-13 -->
+<!-- index.html | v.31 | 2026-05-12 -->
 
 <!DOCTYPE html>
 
@@ -226,6 +226,33 @@ body::after { content: ''; position: fixed; inset: 0; background-image: linear-g
 .toggle-btn.on::after { left: 23px; }
 #campo-senha-acesso { display: none; }
 
+/* ── HISTÓRICO DE PARTIDAS ── */
+#modal-historico-partidas { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 500; align-items: flex-start; justify-content: center; padding: 80px 16px 20px; overflow-y: auto; }
+#modal-historico-partidas.show { display: flex; }
+.hist-partidas-box { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; width: 100%; max-width: 420px; animation: slideUp 0.3s ease; }
+.hist-partidas-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.hist-partidas-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: white; }
+.btn-fechar-hist { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: var(--muted); font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.hist-partidas-lista { display: flex; flex-direction: column; gap: 10px; max-height: 65vh; overflow-y: auto; }
+.hist-partida-card { background: var(--surface2); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 16px; }
+.hist-partida-data { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.hist-partida-placar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hist-partida-time { flex: 1; text-align: center; }
+.hist-partida-nome { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; color: rgba(255,255,255,0.6); margin-bottom: 2px; }
+.hist-partida-nome.vencedor { color: var(--ouro); font-size: 20px; }
+.hist-partida-pts { font-family: 'Bebas Neue', sans-serif; line-height: 1; color: rgba(255,255,255,0.5); }
+.hist-partida-pts.vencedor { color: var(--ouro); font-size: 52px; }
+.hist-partida-pts:not(.vencedor) { font-size: 36px; }
+.hist-partida-nome:not(.vencedor) { font-size: 15px; }
+.hist-partida-sep { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: rgba(255,255,255,0.2); flex-shrink: 0; }
+.hist-partida-trofeu { font-size: 22px; display: block; margin-bottom: 2px; }
+.hist-vazio { text-align: center; padding: 30px 16px; color: var(--muted); font-size: 14px; }
+.btn-limpar-hist { width: 100%; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 10px; border-radius: 10px; border: 1px solid rgba(239,68,68,0.2); background: transparent; color: rgba(239,68,68,0.5); margin-top: 14px; cursor: pointer; transition: all 0.2s; }
+.btn-limpar-hist:active { border-color: var(--vermelho); color: var(--vermelho); background: rgba(239,68,68,0.08); }
+.hist-partidas-lista::-webkit-scrollbar { width: 4px; }
+.hist-partidas-lista::-webkit-scrollbar-track { background: transparent; }
+.hist-partidas-lista::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+
 #creditos-ibbi { position: fixed; bottom: 7px; right: 12px; z-index: 50; display: flex; align-items: center; gap: 6px; opacity: 0.45; transition: opacity 0.3s; pointer-events: none; }
 #creditos-ibbi img { width: 22px; height: 22px; border-radius: 5px; object-fit: cover; }
 #creditos-ibbi span { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e8e8f0; font-family: 'DM Sans', sans-serif; }
@@ -246,7 +273,7 @@ body::after { content: ''; position: fixed; inset: 0; background-image: linear-g
 
 <div id="safe-area"></div>
 <div id="topo-bar">
-  <span id="versao">v.30</span>
+  <span id="versao">v.31</span>
   <span id="topo-titulo">Marcador Dominó</span>
   <div id="fb-status">conectando</div>
 </div>
@@ -407,6 +434,7 @@ body::after { content: ''; position: fixed; inset: 0; background-image: linear-g
   <div class="bottom">
     <button class="btn-reset" onclick="resetar()">↺ Fim de Jogo</button>
     <button class="btn-reset" onclick="resetarVitorias()" style="margin-left:8px;">↺ Zerar Vitórias</button>
+    <button class="btn-reset" onclick="abrirHistoricoPartidas()" style="margin-left:8px;">📜 Histórico</button>
     <button class="qr-toggle" onclick="toggleQR()">▼ QR Code do Display</button>
   </div>
 
@@ -424,6 +452,18 @@ body::after { content: ''; position: fixed; inset: 0; background-image: linear-g
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Modal Histórico de Partidas -->
+<div id="modal-historico-partidas" onclick="if(event.target===this)fecharHistoricoPartidas()">
+  <div class="hist-partidas-box">
+    <div class="hist-partidas-header">
+      <div class="hist-partidas-title">📜 Histórico de Partidas</div>
+      <button class="btn-fechar-hist" onclick="fecharHistoricoPartidas()">✕</button>
+    </div>
+    <div class="hist-partidas-lista" id="hist-partidas-lista"></div>
+    <button class="btn-limpar-hist" onclick="limparHistoricoPartidas()">🗑 Limpar histórico</button>
+  </div>
+</div>
 
 <!-- Modal reset placar -->
 
@@ -1093,10 +1133,33 @@ function cancelarReset() { document.getElementById('modal').classList.remove('sh
 function confirmarReset() {
   document.getElementById('modal').classList.remove('show');
   const meta = parseInt(document.getElementById('meta').value) || 200;
+  const nA = document.getElementById('nomeA').value || 'Equipe A';
+  const nB = document.getElementById('nomeB').value || 'Equipe B';
+  const pA = pontos.A, pB = pontos.B;
+
+  // Determinar vencedor e adicionar vitória
+  let vencedor = null;
   if (pontos.A >= meta || pontos.B >= meta) {
-    if (pontos.A > pontos.B)      { vitorias.A++; document.getElementById('vA').textContent = vitorias.A; }
-    else if (pontos.B > pontos.A) { vitorias.B++; document.getElementById('vB').textContent = vitorias.B; }
+    if (pontos.A > pontos.B)      { vitorias.A++; document.getElementById('vA').textContent = vitorias.A; vencedor = 'A'; }
+    else if (pontos.B > pontos.A) { vitorias.B++; document.getElementById('vB').textContent = vitorias.B; vencedor = 'B'; }
+  } else {
+    // Mesmo sem meta, registrar quem estava na frente
+    if (pA > pB) vencedor = 'A';
+    else if (pB > pA) vencedor = 'B';
   }
+
+  // Gravar no histórico de partidas (Firebase)
+  if (mesaAtualKey && jogoRef) {
+    const entrada = {
+      ts: Date.now(),
+      nomeA: nA, nomeB: nB,
+      pontosA: pA, pontosB: pB,
+      vencedor: vencedor
+    };
+    const histRef = salasRef.child(mesaAtualKey + '/historicoPartidas');
+    histRef.push(entrada).catch(() => {});
+  }
+
   pontos = { A: 0, B: 0 };
   limparHistorico();
   document.getElementById('timeA').classList.remove('venceu','lider');
@@ -1104,6 +1167,71 @@ function confirmarReset() {
   atualizar(); salvar();
   falarPartidaIniciada();
   setTimeout(() => falarPlacarVitorias(), 1200);
+}
+
+// ── Histórico de Partidas ──
+let histPartidasListener = null;
+let histPartidasRef = null;
+
+function abrirHistoricoPartidas() {
+  if (!mesaAtualKey) return;
+  const lista = document.getElementById('hist-partidas-lista');
+  lista.innerHTML = '<div class="hist-vazio">Carregando...</div>';
+  document.getElementById('modal-historico-partidas').classList.add('show');
+
+  histPartidasRef = salasRef.child(mesaAtualKey + '/historicoPartidas');
+  histPartidasRef.orderByChild('ts').once('value', snap => {
+    const dados = snap.val();
+    lista.innerHTML = '';
+    if (!dados) {
+      lista.innerHTML = '<div class="hist-vazio">Nenhuma partida registrada ainda.<br>As partidas aparecem aqui ao clicar em "Fim de Jogo".</div>';
+      return;
+    }
+    const entradas = Object.values(dados).sort((a, b) => b.ts - a.ts);
+    entradas.forEach(e => {
+      const card = document.createElement('div');
+      card.className = 'hist-partida-card';
+
+      const d = new Date(e.ts);
+      const data = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      const vencA = e.vencedor === 'A';
+      const vencB = e.vencedor === 'B';
+      const trofA = vencA ? '<span class="hist-partida-trofeu">🏆</span>' : '';
+      const trofB = vencB ? '<span class="hist-partida-trofeu">🏆</span>' : '';
+
+      card.innerHTML = `
+        <div class="hist-partida-data">${data} às ${hora}</div>
+        <div class="hist-partida-placar">
+          <div class="hist-partida-time">
+            ${trofA}
+            <div class="hist-partida-nome ${vencA ? 'vencedor' : ''}">${e.nomeA}</div>
+            <div class="hist-partida-pts ${vencA ? 'vencedor' : ''}">${e.pontosA}</div>
+          </div>
+          <div class="hist-partida-sep">×</div>
+          <div class="hist-partida-time">
+            ${trofB}
+            <div class="hist-partida-nome ${vencB ? 'vencedor' : ''}">${e.nomeB}</div>
+            <div class="hist-partida-pts ${vencB ? 'vencedor' : ''}">${e.pontosB}</div>
+          </div>
+        </div>`;
+      lista.appendChild(card);
+    });
+  });
+}
+
+function fecharHistoricoPartidas() {
+  document.getElementById('modal-historico-partidas').classList.remove('show');
+}
+
+function limparHistoricoPartidas() {
+  if (!mesaAtualKey) return;
+  if (!confirm('Limpar todo o histórico de partidas desta mesa?')) return;
+  salasRef.child(mesaAtualKey + '/historicoPartidas').remove().then(() => {
+    document.getElementById('hist-partidas-lista').innerHTML = '<div class="hist-vazio">Histórico limpo.</div>';
+    showToast('Histórico limpo');
+  }).catch(() => showToast('⚠️ Erro ao limpar'));
 }
 
 // ── Add pontos ──
